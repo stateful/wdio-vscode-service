@@ -35,11 +35,11 @@ describe('titlebar', () => {
         const workbench = await browser.getWorkbench()
         const itemHelp = await titleBar.getItem('Help')
         const menuHelp = await itemHelp?.select()
-        const itemWelcome = await menuHelp?.getItem('Welcome')
+        const itemWelcome = await menuHelp?.getItem('Walkthrough: Setup VS Code')
         await itemWelcome?.select()
 
         const activeTab = await workbench.getEditorView().getActiveTab()
-        expect(await activeTab?.getTitle()).toEqual('Welcome')
+        expect(await activeTab?.getTitle()).toEqual('Walkthrough: Setup VS Code')
     })
 
     /**
