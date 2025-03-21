@@ -1,57 +1,60 @@
 /* eslint-disable object-shorthand */
-import type { ChainablePromiseElement, ChainablePromiseArray } from 'webdriverio'
+import type {
+    ChainablePromiseElement,
+    ChainablePromiseArray
+} from 'webdriverio'
 
 import * as allLocatorsTypes from '../locators/insiders.js'
 import { ContextMenu } from './index.js'
 
 type ClassWithFunctionLocatorsAsString<T> = {
-    [key in keyof T as T[key] extends Function | undefined ? key : never]: T[key]
+    [key in keyof T as T[key] extends Function | undefined
+        ? key
+        : never]: T[key];
 }
 
 type ClassWithFunctionLocators$<T> = {
-    // @ts-expect-error this fails compiling here but works when applied to a class
     [key in keyof ClassWithFunctionLocatorsAsString<T> as `${key}$`]: (
         // @ts-expect-error this fails compiling here but works when applied to a class
         ...args: Parameters<ClassWithFunctionLocatorsAsString<T>[key]>
-    ) => ChainablePromiseElement<WebdriverIO.Element>
+    ) => ChainablePromiseElement<WebdriverIO.Element>;
 }
 
 type ClassWithFunctionLocators$$<T> = {
-    // @ts-expect-error this fails compiling here but works when applied to a class
     [key in keyof ClassWithFunctionLocatorsAsString<T> as `${key}$$`]: (
         // @ts-expect-error this fails compiling here but works when applied to a class
         ...args: Parameters<ClassWithFunctionLocatorsAsString<T>[key]>
-    ) => ChainablePromiseArray<WebdriverIO.Element[]>
+    ) => ChainablePromiseArray<WebdriverIO.Element[]>;
 }
 
 type ClassWithLocators$<T> = {
     [key in keyof T & string as T[key] extends String | undefined
         ? `${key}$`
-        : never]: ChainablePromiseElement<WebdriverIO.Element>
+        : never]: ChainablePromiseElement<WebdriverIO.Element>;
 }
 type ClassWithLocators$$<T> = {
     [key in keyof T & string as T[key] extends String | undefined
         ? `${key}$$`
-        : never]: ChainablePromiseArray<WebdriverIO.Element[]>
+        : never]: ChainablePromiseArray<WebdriverIO.Element[]>;
 }
 
 type LocatorProperties<T> = {
-    readonly locatorMap: AllLocatorType,
-    readonly locators: T
+    readonly locatorMap: AllLocatorType;
+    readonly locators: T;
 }
 
 type AllLocatorType = typeof allLocatorsTypes
 export type LocatorComponents = keyof AllLocatorType | (keyof AllLocatorType)[]
 export type Locators = Record<string | symbol, string | Function>
 export type VSCodeLocatorMap = Record<keyof AllLocatorType, Locators>
-export type IPageDecorator<T> = (
-    ClassWithLocators$<T> & ClassWithLocators$$<T> &
-    ClassWithFunctionLocators$<T> & ClassWithFunctionLocators$$<T>
-)
+export type IPageDecorator<T> = ClassWithLocators$<T> &
+ClassWithLocators$$<T> &
+ClassWithFunctionLocators$<T> &
+ClassWithFunctionLocators$$<T>
 
 type PageObjectClass = {
-    new(...args: any[]): any
-    [staticMethod: string]: any
+    new (...args: any[]): any;
+    [staticMethod: string]: any;
 }
 
 export function PageDecorator<T extends PageObjectClass> (locators: Locators) {
@@ -59,7 +62,9 @@ export function PageDecorator<T extends PageObjectClass> (locators: Locators) {
         for (const [prop, globalLocator] of Object.entries(locators)) {
             Object.defineProperties(ctor.prototype, {
                 [`${prop}$`]: {
-                    get: function (this: LocatorProperties<any> & BasePage<any>) {
+                    get: function (
+                        this: LocatorProperties<any> & BasePage<any>
+                    ) {
                         const locator: Locators[string] = this.locators[prop] || globalLocator
                         if (typeof locator === 'function') {
                             return (...args: string[]) => this.elem.$(locator(...args) as string)
@@ -68,7 +73,9 @@ export function PageDecorator<T extends PageObjectClass> (locators: Locators) {
                     }
                 },
                 [`${prop}$$`]: {
-                    get: function (this: LocatorProperties<any> & BasePage<any>) {
+                    get: function (
+                        this: LocatorProperties<any> & BasePage<any>
+                    ) {
                         const locator: Locators[string] = this.locators[prop] || globalLocator
                         if (typeof locator === 'function') {
                             return (...args: string[]) => this.elem.$$(locator(...args) as string)
@@ -85,7 +92,10 @@ export function PageDecorator<T extends PageObjectClass> (locators: Locators) {
     }
 }
 
-export abstract class BasePage<PageLocators, LocatorMap extends Record<string, Locators> = VSCodeLocatorMap> {
+export abstract class BasePage<
+    PageLocators,
+    LocatorMap extends Record<string, Locators> = VSCodeLocatorMap
+> {
     /**
      * @private
      */
@@ -96,8 +106,12 @@ export abstract class BasePage<PageLocators, LocatorMap extends Record<string, L
      */
     constructor (
         protected _locators: LocatorMap,
-        private _baseElem?: string | ChainablePromiseElement<WebdriverIO.Element>,
-        private _parentElem?: string | ChainablePromiseElement<WebdriverIO.Element>
+        private _baseElem?:
+        | string
+        | ChainablePromiseElement<WebdriverIO.Element>,
+        private _parentElem?:
+        | string
+        | ChainablePromiseElement<WebdriverIO.Element>
     ) {}
 
     /**
@@ -105,10 +119,13 @@ export abstract class BasePage<PageLocators, LocatorMap extends Record<string, L
      */
     get locators () {
         if (Array.isArray(this.locatorKey)) {
-            return this.locatorKey.reduce((prev, locatorKey) => ({
-                ...prev,
-                ...this._locators[locatorKey]
-            } as Locators), {} as Locators) as any as PageLocators
+            return this.locatorKey.reduce(
+                (prev, locatorKey) => ({
+                    ...prev,
+                    ...this._locators[locatorKey]
+                } as Locators),
+                {} as Locators
+            ) as any as PageLocators
         }
         return this._locators[this.locatorKey] as any as PageLocators
     }
@@ -160,7 +177,9 @@ export abstract class BasePage<PageLocators, LocatorMap extends Record<string, L
     /**
      * @private
      */
-    setParentElement (parentElem: string | ChainablePromiseElement<WebdriverIO.Element>) {
+    setParentElement (
+        parentElem: string | ChainablePromiseElement<WebdriverIO.Element>
+    ) {
         this._parentElem = parentElem
     }
 
@@ -194,17 +213,22 @@ export abstract class ElementWithContextMenu<T> extends BasePage<T> {
      * Open context menu on the element
      */
     async openContextMenu (): Promise<ContextMenu> {
-        const contextMenuLocators = this.locatorMap.ContextMenu as AllLocatorType['ContextMenu']
-        const workbench = browser.$((this.locatorMap.Workbench as AllLocatorType['Workbench']).elem)
+        const contextMenuLocators = this.locatorMap
+            .ContextMenu as AllLocatorType['ContextMenu']
+        const workbench = browser.$(
+            (this.locatorMap.Workbench as AllLocatorType['Workbench']).elem
+        )
         const menus = await browser.$$(contextMenuLocators.contextView)
 
         if (menus.length < 1) {
             await this.elem.click({ button: 2 })
-            await browser.$(contextMenuLocators.contextView).waitForExist({ timeout: 2000 })
+            await browser
+                .$(contextMenuLocators.contextView)
+                .waitForExist({ timeout: 2000 })
             return new ContextMenu(this.locatorMap, workbench).wait()
         }
 
-        if (await workbench.$$(contextMenuLocators.viewBlock).length > 0) {
+        if ((await workbench.$$(contextMenuLocators.viewBlock).length) > 0) {
             await this.elem.click({ button: 2 })
             await this.elem.waitForDisplayed({ reverse: true, timeout: 1000 })
         }
