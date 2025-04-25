@@ -9,7 +9,6 @@ type ClassWithFunctionLocatorsAsString<T> = {
 }
 
 type ClassWithFunctionLocators$<T> = {
-    // @ts-expect-error this fails compiling here but works when applied to a class
     [key in keyof ClassWithFunctionLocatorsAsString<T> as `${key}$`]: (
         // @ts-expect-error this fails compiling here but works when applied to a class
         ...args: Parameters<ClassWithFunctionLocatorsAsString<T>[key]>
@@ -17,7 +16,6 @@ type ClassWithFunctionLocators$<T> = {
 }
 
 type ClassWithFunctionLocators$$<T> = {
-    // @ts-expect-error this fails compiling here but works when applied to a class
     [key in keyof ClassWithFunctionLocatorsAsString<T> as `${key}$$`]: (
         // @ts-expect-error this fails compiling here but works when applied to a class
         ...args: Parameters<ClassWithFunctionLocatorsAsString<T>[key]>
