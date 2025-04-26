@@ -191,7 +191,7 @@ export class EditorGroup extends BasePage<typeof EditorViewLocators> {
 
     constructor (
         locators: VSCodeLocatorMap,
-        element: ChainablePromiseElement<WebdriverIO.Element>,
+        element: ChainablePromiseElement,
         public view = new EditorView(locators)
     ) {
         super(locators, element)
@@ -302,7 +302,7 @@ export class EditorGroup extends BasePage<typeof EditorViewLocators> {
      */
     async getOpenTabs (): Promise<EditorTab[]> {
         const tabs = this.tab$$
-        return tabs.map(async (tab) => (
+        return tabs.map(async (tab: any) => (
             // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             new EditorTab(this.locatorMap, tab as any, this.view).wait()
         ))
@@ -362,7 +362,7 @@ export class EditorTab extends ElementWithContextMenu<typeof EditorLocatorsObj> 
 
     constructor (
         locators: VSCodeLocatorMap,
-        element: ChainablePromiseElement<WebdriverIO.Element>,
+        element: ChainablePromiseElement,
         public view: EditorView
     ) {
         super(locators, element)

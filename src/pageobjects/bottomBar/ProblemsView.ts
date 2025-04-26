@@ -106,7 +106,7 @@ export class ProblemsView extends BasePage<typeof ProblemsViewLocators> {
      * Gets the count badge
      * @returns Promise resolving to the WebElement representing the count badge
      */
-    getCountBadge (): Promise<WebdriverIO.Element> {
+    async getCountBadge (): Promise<ChainablePromiseElement> {
         return this.changeCount$
     }
 }
@@ -127,7 +127,7 @@ export class Marker extends ElementWithContextMenu<typeof MarkerLocators> {
 
     constructor (
         locators: VSCodeLocatorMap,
-        element: ChainablePromiseElement<WebdriverIO.Element>,
+        element: ChainablePromiseElement,
         public view: ProblemsView
     ) {
         super(locators, element, view.elem)
@@ -226,7 +226,7 @@ export class Problem extends ElementWithContextMenu<typeof MarkerLocators> {
         return locationText
             .slice(1, -1)
             .split(',')
-            .map((loc) => parseInt(loc.split(' ').pop() as string, 10))
+            .map((loc: string) => parseInt(loc.split(' ').pop() as string, 10))
     }
 
     /**

@@ -1,12 +1,16 @@
-import { ChainablePromiseElement } from 'webdriverio'
+import { ChainablePromiseElement } from "webdriverio";
 
-import { ViewSection } from '../index.js'
+import { ViewSection } from "../index.js";
 import {
-    BasePage, PageDecorator, IPageDecorator, VSCodeLocatorMap
-} from '../utils.js'
-import { WelcomeContent as WelcomeContentLocators } from '../../locators/1.73.0.js'
+    BasePage,
+    PageDecorator,
+    IPageDecorator,
+    VSCodeLocatorMap,
+} from "../utils.js";
+import { WelcomeContent as WelcomeContentLocators } from "../../locators/1.73.0.js";
 
-export interface WelcomeContentButton extends IPageDecorator<typeof WelcomeContentLocators> {}
+export interface WelcomeContentButton
+    extends IPageDecorator<typeof WelcomeContentLocators> {}
 /**
  * A button that appears in the welcome content and can be clicked to execute a command.
  *
@@ -15,31 +19,34 @@ export interface WelcomeContentButton extends IPageDecorator<typeof WelcomeConte
  * @category Sidebar
  */
 @PageDecorator(WelcomeContentLocators)
-export class WelcomeContentButton extends BasePage<typeof WelcomeContentLocators> {
+export class WelcomeContentButton extends BasePage<
+    typeof WelcomeContentLocators
+> {
     /**
      * @private
      */
-    public locatorKey = 'WelcomeContent' as const
+    public locatorKey = "WelcomeContent" as const;
 
     /**
      * @param panel  The panel containing the button in the welcome section
      * @param welcomeSection  The enclosing welcome section
      */
-    constructor (
+    constructor(
         locators: VSCodeLocatorMap,
-        panel: ChainablePromiseElement<WebdriverIO.Element>,
+        panel: ChainablePromiseElement,
         public welcomeSection: WelcomeContentSection
     ) {
-        super(locators, panel)
+        super(locators, panel);
     }
 
     /** Return the title displayed on this button */
-    public getTitle (): Promise<string> {
-        return this.elem.getText()
+    public getTitle(): Promise<string> {
+        return this.elem.getText();
     }
 }
 
-export interface WelcomeContentSection extends IPageDecorator<typeof WelcomeContentLocators> {}
+export interface WelcomeContentSection
+    extends IPageDecorator<typeof WelcomeContentLocators> {}
 /**
  * A section in an empty custom view, see:
  * https://code.visualstudio.com/api/extension-guides/tree-view#welcome-content
@@ -55,52 +62,63 @@ export interface WelcomeContentSection extends IPageDecorator<typeof WelcomeCont
  * @category Sidebar
  */
 @PageDecorator(WelcomeContentLocators)
-export class WelcomeContentSection extends BasePage<typeof WelcomeContentLocators> {
+export class WelcomeContentSection extends BasePage<
+    typeof WelcomeContentLocators
+> {
     /**
      * @private
      */
-    public locatorKey = 'WelcomeContent' as const
+    public locatorKey = "WelcomeContent" as const;
 
     /**
      * @param panel  The panel containing the welcome content.
      * @param parent  The webelement in which the welcome content is embedded.
      */
-    constructor (
+    constructor(
         locators: VSCodeLocatorMap,
-        panel: ChainablePromiseElement<WebdriverIO.Element>,
+        panel: ChainablePromiseElement,
         parent: ViewSection
     ) {
-        super(locators, panel, parent.elem)
+        super(locators, panel, parent.elem);
     }
 
     /**
      * Combination of [[getButtons]] and [[getTextSections]]: returns all entries in the welcome
      * view in the order that they appear.
      */
-    public async getContents (): Promise<(WelcomeContentButton | string)[]> {
-        const elements = await this.buttonOrText$$
-        return Promise.all(elements.map(async (e) => {
-            const tagName = await e.getTagName()
-            if (tagName === 'p') {
-                return e.getText()
+    public async getContents(): Promise<(WelcomeContentButton | string)[]> {
+        const elements = await this.buttonOrText$$;
+        const result: (WelcomeContentButton | string)[] = [];
+        for (const e of elements) {
+            const tagName = await e.getTagName();
+            if (tagName === "p") {
+                result.push(await e.getText());
+            } else {
+                result.push(
+                    new WelcomeContentButton(
+                        this.locatorMap,
+                        e as unknown as ChainablePromiseElement,
+                        this
+                    )
+                );
             }
-
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-            return new WelcomeContentButton(this.locatorMap, e as any, this)
-        }))
+        }
+        return result;
     }
 
     /** Finds all buttons in the welcome content */
-    public getButtons (): Promise<WelcomeContentButton[]> {
+    public getButtons(): Promise<WelcomeContentButton[]> {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        return this.button$$.map((elem) => new WelcomeContentButton(this.locatorMap, elem as any, this))
+        return this.button$$.map(
+            (elem: any) => new WelcomeContentButton(this.locatorMap, elem, this)
+        );
     }
 
     /**
      * Finds all text entries in the welcome content and returns each line as an
      * element in an array.
      */
-    public getTextSections (): Promise<string[]> {
-        return this.text$$.map((elem) => elem.getText())
+    public getTextSections(): Promise<string[]> {
+        return this.text$$.map((elem: any) => elem.getText());
     }
 }

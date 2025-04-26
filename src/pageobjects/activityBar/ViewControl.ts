@@ -38,7 +38,7 @@ export class ViewControl extends ElementWithContextMenu<typeof ViewControlLocato
 
     constructor (
         locators: VSCodeLocatorMap,
-        element: ChainablePromiseElement<WebdriverIO.Element>,
+        element: ChainablePromiseElement,
         public bar: ActivityBar
     ) {
         super(locators, element, bar.elem)
@@ -56,13 +56,13 @@ export class ViewControl extends ElementWithContextMenu<typeof ViewControlLocato
             await browser.pause(500)
         }
         const view = await new SideBarView(this.locatorMap).wait()
-        if ((await view.elem.$$(this.locators.scmId)).length > 0) {
+        if (await (await view.elem.$$(this.locators.scmId)).length > 0) {
             if (await browser.getVSCodeChannel() === 'vscode' && await browser.getVSCodeVersion() >= '1.47.0') {
                 return new NewScmView(this.locatorMap).wait()
             }
             return new ScmView(this.locatorMap).wait()
         }
-        if ((await view.elem.$$(this.locators.debugId)).length > 0) {
+        if (await (await view.elem.$$(this.locators.debugId)).length > 0) {
             return new DebugView(this.locatorMap).wait()
         }
         return view

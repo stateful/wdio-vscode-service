@@ -44,8 +44,8 @@ export class ModalDialog extends BasePage<typeof DialogLocators> {
      */
     async pushButton (title: string): Promise<void> {
         const buttons = await this.getButtons()
-        const titles = await buttons.map(async (btn) => btn.getAttribute('title'))
-        const index = titles.findIndex((value) => value === title)
+        const titles = await buttons.map(async (btn: any) => btn.getAttribute('title'))
+        const index = titles.findIndex((value: any) => value === title)
         if (index > -1) {
             await buttons[index].click()
         }

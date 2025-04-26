@@ -1,22 +1,26 @@
-import { fileURLToPath } from 'node:url'
-import clipboard from 'clipboardy'
-import { Key, ChainablePromiseElement } from 'webdriverio'
+import { fileURLToPath } from "node:url";
+import clipboard from "clipboardy";
+import { Key, ChainablePromiseElement } from "webdriverio";
 
-import logger from '@wdio/logger'
-import { ContentAssist, ContextMenu, InputBox } from '../index.js'
-import { StatusBar } from '../statusBar/StatusBar.js'
-import { Editor, EditorLocators } from './Editor.js'
+import logger from "@wdio/logger";
+import { ContentAssist, ContextMenu, InputBox } from "../index.js";
+import { StatusBar } from "../statusBar/StatusBar.js";
+import { Editor, EditorLocators } from "./Editor.js";
 
 import {
-    PageDecorator, IPageDecorator, BasePage, ElementWithContextMenu, VSCodeLocatorMap
-} from '../utils.js'
+    PageDecorator,
+    IPageDecorator,
+    BasePage,
+    ElementWithContextMenu,
+    VSCodeLocatorMap,
+} from "../utils.js";
 import {
     TextEditor as TextEditorLocators,
-    FindWidget as FindWidgetLocators
-} from '../../locators/1.73.0.js'
-import { CMD_KEY } from '../../constants.js'
+    FindWidget as FindWidgetLocators,
+} from "../../locators/1.73.0.js";
+import { CMD_KEY } from "../../constants.js";
 
-const log = logger('wdio-vscode-service')
+const log = logger("wdio-vscode-service");
 
 export interface TextEditor extends IPageDecorator<EditorLocators> {}
 /**
@@ -29,27 +33,32 @@ export class TextEditor extends Editor<EditorLocators> {
     /**
      * @private
      */
-    public locatorKey = 'TextEditor' as const
+    public locatorKey = "TextEditor" as const;
 
     /**
      * Find whether the active editor has unsaved changes
      * @returns Promise resolving to true/false
      */
-    async isDirty (): Promise<boolean> {
-        const klass = await this.parent.$(this.locators.activeTab).getAttribute('class')
-        return klass.indexOf('dirty') >= 0
+    async isDirty(): Promise<boolean> {
+        const klass = await this.parent
+            .$(this.locators.activeTab)
+            .getAttribute("class");
+        return klass.indexOf("dirty") >= 0;
     }
 
     /**
      * Saves the active editor
      * @returns Promise resolving when ctrl+s is invoked
      */
-    async save (): Promise<void> {
-        await browser.action('key')
-            .down(CMD_KEY).down('s')
+    async save(): Promise<void> {
+        await browser
+            .action("key")
+            .down(CMD_KEY)
+            .down("s")
             .pause(10)
-            .up(CMD_KEY).up('s')
-            .perform()
+            .up(CMD_KEY)
+            .up("s")
+            .perform();
     }
 
     /**
@@ -57,32 +66,37 @@ export class TextEditor extends Editor<EditorLocators> {
      *
      * @returns InputBox serving as a simple file dialog
      */
-    async saveAs (): Promise<InputBox> {
-        await browser.action('key')
-            .down(CMD_KEY).down(Key.Shift).down('s')
+    async saveAs(): Promise<InputBox> {
+        await browser
+            .action("key")
+            .down(CMD_KEY)
+            .down(Key.Shift)
+            .down("s")
             .pause(10)
-            .up(CMD_KEY).down(Key.Shift).up('s')
-            .perform()
-        const inputBox = browser.$(this.locatorMap.InputBox.elem as string)
-        await inputBox.waitForExist({ timeout: 5000 })
-        return new InputBox(this.locatorMap, inputBox)
+            .up(CMD_KEY)
+            .down(Key.Shift)
+            .up("s")
+            .perform();
+        const inputBox = browser.$(this.locatorMap.InputBox.elem as string);
+        await inputBox.waitForExist({ timeout: 5000 });
+        return new InputBox(this.locatorMap, inputBox);
     }
 
     /**
      * Retrieve the Uri of the file opened in the active editor
      * @returns Promise resolving to editor's underlying Uri
      */
-    async getFileUri (): Promise<string> {
-        const ed = await this.editorContainer$
-        return ed.getAttribute(this.locators.dataUri)
+    async getFileUri(): Promise<string> {
+        const ed = await this.editorContainer$;
+        return ed.getAttribute(this.locators.dataUri);
     }
 
     /**
      * Retrieve the path to the file opened in the active editor
      * @returns Promise resolving to editor's underlying file path
      */
-    async getFilePath (): Promise<string> {
-        return fileURLToPath(await this.getFileUri())
+    async getFilePath(): Promise<string> {
+        return fileURLToPath(await this.getFileUri());
     }
 
     /**
@@ -91,59 +105,76 @@ export class TextEditor extends Editor<EditorLocators> {
      * @param open true to open, false to close
      * @returns Promise resolving to ContentAssist object when opening, void otherwise
      */
-    async toggleContentAssist (open: boolean): Promise<ContentAssist | undefined> {
-        let isHidden = true
+    async toggleContentAssist(
+        open: boolean
+    ): Promise<ContentAssist | undefined> {
+        let isHidden = true;
         try {
-            const assist = await this.elem.$(this.locatorMap.ContentAssist.elem as string)
-            const klass = await assist.getAttribute('class')
-            const visibility = await assist.getCSSProperty('visibility')
-            isHidden = klass.indexOf('visible') < 0 || visibility.value === 'hidden'
+            const assist = await this.elem.$(
+                this.locatorMap.ContentAssist.elem as string
+            );
+            const klass = await assist.getAttribute("class");
+            const visibility = await assist.getCSSProperty("visibility");
+            isHidden =
+                klass.indexOf("visible") < 0 || visibility.value === "hidden";
         } catch (err) {
-            isHidden = true
+            isHidden = true;
         }
         if (open) {
             if (isHidden) {
-                await browser.action('key')
-                    .down(CMD_KEY).down(Key.Space)
-                    .up(CMD_KEY).up(Key.Space)
-                    .perform()
-                await browser.$(this.locatorMap.ContentAssist.elem as string)
-                    .waitForExist({ timeout: 2000 })
+                await browser
+                    .action("key")
+                    .down(CMD_KEY)
+                    .down(Key.Space)
+                    .up(CMD_KEY)
+                    .up(Key.Space)
+                    .perform();
+                await browser
+                    .$(this.locatorMap.ContentAssist.elem as string)
+                    .waitForExist({ timeout: 2000 });
             }
-            const assist = await new ContentAssist(this.locatorMap, this).wait()
-            await browser.waitUntil(() => assist.isLoaded(), { timeout: 10000 })
-            return assist
+            const assist = await new ContentAssist(
+                this.locatorMap,
+                this
+            ).wait();
+            await browser.waitUntil(() => assist.isLoaded(), {
+                timeout: 10000,
+            });
+            return assist;
         }
         if (!isHidden) {
-            await browser.action('key')
-                .down(Key.Escape).up(Key.Escape)
-                .perform()
+            await browser
+                .action("key")
+                .down(Key.Escape)
+                .up(Key.Escape)
+                .perform();
         }
-        return undefined
+        return undefined;
     }
 
     /**
      * Get all text from the editor
      * @returns Promise resolving to editor text
      */
-    async getText (): Promise<string> {
-        await browser.action('key')
-            .down(CMD_KEY).down('a').down('c')
+    async getText(): Promise<string> {
+        await browser
+            .action("key")
+            .down(CMD_KEY)
+            .down("a")
+            .down("c")
             .pause(10)
-            .up(CMD_KEY).up('a').up('c')
-            .perform()
-        const text = clipboard.readSync()
-        await browser.action('key')
-            .down(Key.ArrowUp).up(Key.ArrowUp)
-            .perform()
-        clipboard.writeSync('')
+            .up(CMD_KEY)
+            .up("a")
+            .up("c")
+            .perform();
+        const text = clipboard.readSync();
+        await browser.action("key").down(Key.ArrowUp).up(Key.ArrowUp).perform();
+        clipboard.writeSync("");
 
         /**
          * let's return "" if the editor is empty rather than "\n"
          */
-        return text.trim().length === 0
-            ? ''
-            : text
+        return text.trim().length === 0 ? "" : text;
     }
 
     /**
@@ -152,16 +183,21 @@ export class TextEditor extends Editor<EditorLocators> {
      * @param formatText format the new text, default false
      * @returns Promise resolving once the new text is copied over
      */
-    async setText (text: string, formatText = false): Promise<void> {
-        clipboard.writeSync(text)
-        await browser.action('key')
-            .down(CMD_KEY).down('a').down('v')
+    async setText(text: string, formatText = false): Promise<void> {
+        clipboard.writeSync(text);
+        await browser
+            .action("key")
+            .down(CMD_KEY)
+            .down("a")
+            .down("v")
             .pause(10)
-            .up(CMD_KEY).up('a').up('v')
-            .perform()
-        clipboard.writeSync('')
+            .up(CMD_KEY)
+            .up("a")
+            .up("v")
+            .perform();
+        clipboard.writeSync("");
         if (formatText) {
-            await this.formatDocument()
+            await this.formatDocument();
         }
     }
 
@@ -169,12 +205,17 @@ export class TextEditor extends Editor<EditorLocators> {
      * Deletes all text within the editor
      * @returns Promise resolving once the text is deleted
      */
-    async clearText (): Promise<void> {
-        await browser.action('key')
-            .down(CMD_KEY).down('a').down(Key.Backspace)
+    async clearText(): Promise<void> {
+        await browser
+            .action("key")
+            .down(CMD_KEY)
+            .down("a")
+            .down(Key.Backspace)
             .pause(10)
-            .up(CMD_KEY).up('a').up(Key.Backspace)
-            .perform()
+            .up(CMD_KEY)
+            .up("a")
+            .up(Key.Backspace)
+            .perform();
     }
 
     /**
@@ -182,13 +223,13 @@ export class TextEditor extends Editor<EditorLocators> {
      * @param line number of the line to retrieve
      * @returns Promise resolving to text at the given line number
      */
-    async getTextAtLine (line: number): Promise<string> {
-        const text = await this.getText()
-        const lines = text.split('\n')
+    async getTextAtLine(line: number): Promise<string> {
+        const text = await this.getText();
+        const lines = text.split("\n");
         if (line < 1 || line > lines.length) {
-            throw new Error(`Line number ${line} does not exist`)
+            throw new Error(`Line number ${line} does not exist`);
         }
-        return lines[line - 1].trim()
+        return lines[line - 1].trim();
     }
 
     /**
@@ -197,13 +238,13 @@ export class TextEditor extends Editor<EditorLocators> {
      * @param text text to set at the line
      * @returns Promise resolving when the text is typed in
      */
-    async setTextAtLine (line: number, text: string): Promise<void> {
-        if (line < 1 || line > await this.getNumberOfLines()) {
-            throw new Error(`Line number ${line} does not exist`)
+    async setTextAtLine(line: number, text: string): Promise<void> {
+        if (line < 1 || line > (await this.getNumberOfLines())) {
+            throw new Error(`Line number ${line} does not exist`);
         }
-        const lines = (await this.getText()).split('\n')
-        lines[line - 1] = text
-        await this.setText(lines.join('\n'))
+        const lines = (await this.getText()).split("\n");
+        lines[line - 1] = text;
+        await this.setText(lines.join("\n"));
     }
 
     /**
@@ -217,21 +258,21 @@ export class TextEditor extends Editor<EditorLocators> {
      * If occurrence number is specified, searches until it finds as many instances of the given text.
      * Returns the line number that holds the last occurrence found this way.
      */
-    async getLineOfText (text: string, occurrence = 1): Promise<number> {
-        let lineNum = -1
-        let found = 0
-        const lines = (await this.getText()).split('\n')
+    async getLineOfText(text: string, occurrence = 1): Promise<number> {
+        let lineNum = -1;
+        let found = 0;
+        const lines = (await this.getText()).split("\n");
 
         for (let i = 0; i < lines.length; i += 1) {
             if (lines[i].includes(text)) {
-                found += 1
-                lineNum = i + 1
+                found += 1;
+                lineNum = i + 1;
                 if (found >= occurrence) {
-                    break
+                    break;
                 }
             }
         }
-        return lineNum
+        return lineNum;
     }
 
     /**
@@ -240,55 +281,63 @@ export class TextEditor extends Editor<EditorLocators> {
      * @param text text to select
      * @param occurrence specify which onccurrence of text to select if multiple are present in the document
      */
-    async selectText (text: string, occurrence = 1): Promise<void> {
-        const lineNum = await this.getLineOfText(text, occurrence)
+    async selectText(text: string, occurrence = 1): Promise<void> {
+        const lineNum = await this.getLineOfText(text, occurrence);
         if (lineNum < 1) {
-            throw new Error(`Text '${text}' not found`)
+            throw new Error(`Text '${text}' not found`);
         }
 
-        const line = await this.getTextAtLine(lineNum)
-        const column = line.indexOf(text) + 1
+        const line = await this.getTextAtLine(lineNum);
+        const column = line.indexOf(text) + 1;
 
-        await this.moveCursor(lineNum, column)
+        await this.moveCursor(lineNum, column);
 
-        await browser.action('key')
-            .down(CMD_KEY).down(Key.Shift).down(Key.ArrowRight)
+        await browser
+            .action("key")
+            .down(CMD_KEY)
+            .down(Key.Shift)
+            .down(Key.ArrowRight)
             .pause(10)
-            .up(CMD_KEY).up(Key.Shift).up(Key.ArrowRight)
-            .perform()
+            .up(CMD_KEY)
+            .up(Key.Shift)
+            .up(Key.ArrowRight)
+            .perform();
     }
 
     /**
      * Get the text that is currently selected as string
      */
-    async getSelectedText (): Promise<string> {
-        await browser.action('key')
-            .down(CMD_KEY).down('c')
-            .up(CMD_KEY).up('c')
-            .perform()
-        return clipboard.read()
+    async getSelectedText(): Promise<string> {
+        await browser
+            .action("key")
+            .down(CMD_KEY)
+            .down("c")
+            .up(CMD_KEY)
+            .up("c")
+            .perform();
+        return clipboard.read();
     }
 
     /**
      * Get the selection block as a page object
      * @returns Selection page object
      */
-    async getSelection (): Promise<Selection | undefined> {
-        const selection = await this.selection$$
-        if (selection.length < 1) {
-            return undefined
+    async getSelection(): Promise<Selection | undefined> {
+        const selection = await this.selection$$;
+        if ((await selection.length) < 1) {
+            return undefined;
         }
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        return new Selection(this.locatorMap, selection[0] as any, this)
+        return new Selection(this.locatorMap, selection[0] as any, this);
     }
 
-    async openFindWidget (): Promise<FindWidget> {
-        await browser.keys([CMD_KEY, 'f'])
-        const widget = await browser.$(this.locators.findWidget)
-        await widget.waitForDisplayed({ timeout: 2000 })
+    async openFindWidget(): Promise<FindWidget> {
+        await browser.keys([CMD_KEY, "f"]);
+        const widget = await browser.$(this.locators.findWidget);
+        await widget.waitForDisplayed({ timeout: 2000 });
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        return new FindWidget(this.locatorMap, widget as any, this)
+        return new FindWidget(this.locatorMap, widget as any, this);
     }
 
     /**
@@ -298,10 +347,16 @@ export class TextEditor extends Editor<EditorLocators> {
      * @param text text to add
      * @returns Promise resolving when the text is typed in
      */
-    async typeTextAt (line: number, column: number, text: string): Promise<void> {
-        await this.moveCursor(line, column)
-        const inputarea = await this.elem.$(this.locatorMap.Editor.inputArea as string)
-        await inputarea.addValue(text)
+    async typeTextAt(
+        line: number,
+        column: number,
+        text: string
+    ): Promise<void> {
+        await this.moveCursor(line, column);
+        const inputarea = await this.elem.$(
+            this.locatorMap.Editor.inputArea as string
+        );
+        await inputarea.addValue(text);
     }
 
     /**
@@ -309,9 +364,11 @@ export class TextEditor extends Editor<EditorLocators> {
      * @param text text to type
      * @returns promise resolving when the text is typed in
      */
-    async typeText (text: string): Promise<void> {
-        const inputarea = await this.elem.$(this.locatorMap.Editor.inputArea as string)
-        await inputarea.addValue(text)
+    async typeText(text: string): Promise<void> {
+        const inputarea = await this.elem.$(
+            this.locatorMap.Editor.inputArea as string
+        );
+        await inputarea.addValue(text);
     }
 
     /**
@@ -320,37 +377,45 @@ export class TextEditor extends Editor<EditorLocators> {
      * @param column column number to move to
      * @returns Promise resolving when the cursor has reached the given coordinates
      */
-    async moveCursor (line: number, column: number): Promise<void> {
-        if (line < 1 || line > await this.getNumberOfLines()) {
-            throw new Error(`Line number ${line} does not exist`)
+    async moveCursor(line: number, column: number): Promise<void> {
+        if (line < 1 || line > (await this.getNumberOfLines())) {
+            throw new Error(`Line number ${line} does not exist`);
         }
         if (column < 1) {
-            throw new Error(`Column number ${column} does not exist`)
+            throw new Error(`Column number ${column} does not exist`);
         }
-        let coordinates = await this.getCoordinates()
-        const lineGap = coordinates[0] - line
-        const lineKey = lineGap >= 0 ? Key.ArrowUp : Key.ArrowDown
+        let coordinates = await this.getCoordinates();
+        const lineGap = coordinates[0] - line;
+        const lineKey = lineGap >= 0 ? Key.ArrowUp : Key.ArrowDown;
         for (let i = 0; i < Math.abs(lineGap); i += 1) {
-            await browser.action('key')
-                .down(lineKey).pause(10).up(lineKey)
-                .perform()
+            await browser
+                .action("key")
+                .down(lineKey)
+                .pause(10)
+                .up(lineKey)
+                .perform();
             // eslint-disable-next-line wdio/no-pause
-            await browser.pause(50)
+            await browser.pause(50);
         }
 
         // eslint-disable-next-line wdio/no-pause
-        await browser.pause(100)
-        coordinates = await this.getCoordinates()
-        const columnGap = coordinates[1] - column
-        const columnKey = columnGap >= 0 ? Key.ArrowLeft : Key.ArrowRight
+        await browser.pause(100);
+        coordinates = await this.getCoordinates();
+        const columnGap = coordinates[1] - column;
+        const columnKey = columnGap >= 0 ? Key.ArrowLeft : Key.ArrowRight;
         for (let i = 0; i < Math.abs(columnGap); i += 1) {
-            await browser.action('key')
-                .down(columnKey).pause(10).up(columnKey)
-                .perform()
+            await browser
+                .action("key")
+                .down(columnKey)
+                .pause(10)
+                .up(columnKey)
+                .perform();
             // eslint-disable-next-line wdio/no-pause
-            await browser.pause(50)
+            await browser.pause(50);
             if ((await this.getCoordinates())[0] !== coordinates[0]) {
-                throw new Error(`Column number ${column} is not accessible on line ${line}`)
+                throw new Error(
+                    `Column number ${column} is not accessible on line ${line}`
+                );
             }
         }
     }
@@ -359,36 +424,43 @@ export class TextEditor extends Editor<EditorLocators> {
      * Get number of lines in the editor
      * @returns Promise resolving to number of lines
      */
-    async getNumberOfLines (): Promise<number> {
-        const lines = (await this.getText()).split('\n')
-        return lines.length
+    async getNumberOfLines(): Promise<number> {
+        const lines = (await this.getText()).split("\n");
+        return lines.length;
     }
 
     /**
      * Use the built-in 'Format Document' option to format the text
      * @returns Promise resolving when the Format Document command is invoked
      */
-    async formatDocument (): Promise<void> {
-        const menu = await this.openContextMenu()
+    async formatDocument(): Promise<void> {
+        const menu = await this.openContextMenu();
         try {
-            await menu.select('Format Document')
+            await menu.select("Format Document");
         } catch (err) {
-            log.error('Warn: Format Document not available for selected language')
+            log.error(
+                "Warn: Format Document not available for selected language"
+            );
             if (await menu.elem.isDisplayed()) {
-                await menu.close()
+                await menu.close();
             }
         }
     }
 
-    async openContextMenu (): Promise<ContextMenu> {
-        await this.elem.click({ button: 2 })
-        const shadowRootHost = await this.view.elem.$$('.shadow-root-host')
+    async openContextMenu(): Promise<ContextMenu> {
+        await this.elem.click({ button: 2 });
+        const shadowRootHost = await this.view.elem.$$(".shadow-root-host");
 
-        if (shadowRootHost.length > 0) {
-            const shadowRoot = $(await browser.execute('return arguments[0].shadowRoot', shadowRootHost[0]))
-            return new ContextMenu(this.locatorMap, shadowRoot).wait()
+        if ((await shadowRootHost.length) > 0) {
+            const shadowRoot = $(
+                await browser.execute(
+                    "return arguments[0].shadowRoot",
+                    shadowRootHost[0]
+                )
+            );
+            return new ContextMenu(this.locatorMap, shadowRoot).wait();
         }
-        return super.openContextMenu()
+        return super.openContextMenu();
     }
 
     /**
@@ -396,14 +468,16 @@ export class TextEditor extends Editor<EditorLocators> {
      *
      * **Caution** line & column coordinates do not start at `0` but at `1`!
      */
-    async getCoordinates (): Promise<[number, number]> {
-        const coords: number[] = []
-        const statusBar = new StatusBar(this.locatorMap)
-        const coordinates = <RegExpMatchArray>(await statusBar.getCurrentPosition()).match(/\d+/g)
+    async getCoordinates(): Promise<[number, number]> {
+        const coords: number[] = [];
+        const statusBar = new StatusBar(this.locatorMap);
+        const coordinates = <RegExpMatchArray>(
+            (await statusBar.getCurrentPosition()).match(/\d+/g)
+        );
         for (const c of coordinates) {
-            coords.push(+c)
+            coords.push(+c);
         }
-        return [coords[0], coords[1]]
+        return [coords[0], coords[1]];
     }
 
     /**
@@ -412,44 +486,48 @@ export class TextEditor extends Editor<EditorLocators> {
      * @param line target line number
      * @returns promise resolving to true when a breakpoint was added, false when removed or
      */
-    async toggleBreakpoint (line: number): Promise<boolean> {
-        const margin = await this.marginArea$
-        const lineNum = await margin.$(this.locators.lineNumber(line))
-        await lineNum.moveTo()
+    async toggleBreakpoint(line: number): Promise<boolean> {
+        const margin = await this.marginArea$;
+        const lineNum = await margin.$(this.locators.lineNumber(line));
+        await lineNum.moveTo();
 
-        const lineOverlay = await margin.$(this.locators.lineOverlay(line))
-        const breakPoint = await lineOverlay.$$(this.locators.breakPoint)
-        if (breakPoint.length > 0) {
-            await breakPoint[0].click()
+        const lineOverlay = await margin.$(this.locators.lineOverlay(line));
+        const breakPoint = await lineOverlay.$$(this.locators.breakPoint);
+        if ((await breakPoint.length) > 0) {
+            await breakPoint[0].click();
             // eslint-disable-next-line wdio/no-pause
-            await browser.pause(200)
-            return false
+            await browser.pause(200);
+            return false;
         }
 
-        const noBreak = await lineOverlay.$$(this.locators.debugHint)
-        if (noBreak.length > 0) {
-            await noBreak[0].click()
+        const noBreak = await lineOverlay.$$(this.locators.debugHint);
+        if ((await noBreak.length) > 0) {
+            await noBreak[0].click();
             // eslint-disable-next-line wdio/no-pause
-            await browser.pause(200)
-            return true
+            await browser.pause(200);
+            return true;
         }
-        return false
+        return false;
     }
 
     /**
      * Get all code lenses within the editor
      * @returns list of CodeLens page objects
      */
-    async getCodeLenses (): Promise<CodeLens[]> {
-        const lenses: CodeLens[] = []
-        const widgets = await this.elem.$('.contentWidgets')
-        const items = await widgets.$$('.//span[contains(@widgetid, \'codelens.widget\')]')
+    async getCodeLenses(): Promise<CodeLens[]> {
+        const lenses: CodeLens[] = [];
+        const widgets = await this.elem.$(".contentWidgets");
+        const items = await widgets.$$(
+            ".//span[contains(@widgetid, 'codelens.widget')]"
+        );
 
         for (const item of items) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-            lenses.push(await new CodeLens(this.locatorMap, item as any, this).wait())
+            lenses.push(
+                await new CodeLens(this.locatorMap, item as any, this).wait()
+            );
         }
-        return lenses
+        return lenses;
     }
 
     /**
@@ -458,21 +536,23 @@ export class TextEditor extends Editor<EditorLocators> {
      * @param indexOrTitle zero based index (counting from the top of the editor), or partial title of the code lens
      * @returns CodeLens object if such a code lens exists, undefined otherwise
      */
-    async getCodeLens (indexOrTitle: number | string): Promise<CodeLens | undefined> {
-        const lenses = await this.getCodeLenses()
+    async getCodeLens(
+        indexOrTitle: number | string
+    ): Promise<CodeLens | undefined> {
+        const lenses = await this.getCodeLenses();
 
-        if (typeof indexOrTitle === 'string') {
+        if (typeof indexOrTitle === "string") {
             for (const lens of lenses) {
-                const title = await lens.getText()
-                const match = title.match(indexOrTitle)
+                const title = await lens.getText();
+                const match = title.match(indexOrTitle);
                 if (match && match.length > 0) {
-                    return lens
+                    return lens;
                 }
             }
         } else if (lenses[indexOrTitle]) {
-            return lenses[indexOrTitle]
+            return lenses[indexOrTitle];
         }
-        return undefined
+        return undefined;
     }
 }
 
@@ -487,25 +567,32 @@ class Selection extends ElementWithContextMenu<typeof TextEditorLocators> {
     /**
      * @private
      */
-    public locatorKey = 'TextEditor' as const
+    public locatorKey = "TextEditor" as const;
 
-    constructor (
+    constructor(
         locators: VSCodeLocatorMap,
-        element: ChainablePromiseElement<WebdriverIO.Element>,
+        element: ChainablePromiseElement,
         public editor: TextEditor
     ) {
-        super(locators, element)
+        super(locators, element);
     }
 
-    async openContextMenu (): Promise<ContextMenu> {
-        await this.elem.click({ button: 2 })
-        const shadowRootHost = await this.editor.view.elem.$$('.shadow-root-host')
+    async openContextMenu(): Promise<ContextMenu> {
+        await this.elem.click({ button: 2 });
+        const shadowRootHost = await this.editor.view.elem.$$(
+            ".shadow-root-host"
+        );
 
-        if (shadowRootHost.length > 0) {
-            const shadowRoot = $(await browser.execute('return arguments[0].shadowRoot', shadowRootHost[0]))
-            return new ContextMenu(this.locatorMap, shadowRoot).wait()
+        if ((await shadowRootHost.length) > 0) {
+            const shadowRoot = $(
+                await browser.execute(
+                    "return arguments[0].shadowRoot",
+                    shadowRootHost[0]
+                )
+            );
+            return new ContextMenu(this.locatorMap, shadowRoot).wait();
         }
-        return super.openContextMenu()
+        return super.openContextMenu();
     }
 }
 
@@ -520,32 +607,32 @@ export class CodeLens extends BasePage<typeof TextEditorLocators> {
     /**
      * @private
      */
-    public locatorKey = 'TextEditor' as const
+    public locatorKey = "TextEditor" as const;
 
-    constructor (
+    constructor(
         locators: VSCodeLocatorMap,
-        element: ChainablePromiseElement<WebdriverIO.Element>,
+        element: ChainablePromiseElement,
         public editor: TextEditor
     ) {
-        super(locators, element)
+        super(locators, element);
     }
 
     /**
      * Get the text displayed on the code lens
      * @returns text as string
      */
-    async getText (): Promise<string> {
-        const link = await this.elem.$('a')
-        return link.getText()
+    async getText(): Promise<string> {
+        const link = await this.elem.$("a");
+        return link.getText();
     }
 
     /**
      * Get tooltip of the code lens
      * @returns tooltip as string
      */
-    async getTooltip (): Promise<string> {
-        const link = await this.elem.$('a')
-        return link.getAttribute('title')
+    async getTooltip(): Promise<string> {
+        const link = await this.elem.$("a");
+        return link.getAttribute("title");
     }
 }
 
@@ -560,32 +647,35 @@ export class FindWidget extends BasePage<typeof FindWidgetLocators> {
     /**
      * @private
      */
-    public locatorKey = 'FindWidget' as const
+    public locatorKey = "FindWidget" as const;
 
-    constructor (
+    constructor(
         locators: VSCodeLocatorMap,
-        element: ChainablePromiseElement<WebdriverIO.Element>,
+        element: ChainablePromiseElement,
         public textEditor: TextEditor
     ) {
-        super(locators, element)
+        super(locators, element);
     }
 
     /**
      * Toggle between find and replace mode
      * @param replace true for replace, false for find
      */
-    async toggleReplace (replace: boolean): Promise<void> {
-        const btn = await this.toggleReplace$
-        const klass = await btn.getAttribute('class')
+    async toggleReplace(replace: boolean): Promise<void> {
+        const btn = await this.toggleReplace$;
+        const klass = await btn.getAttribute("class");
 
-        if ((replace && klass.includes('collapsed')) || (!replace && !klass.includes('collapsed'))) {
-            await btn.addValue(' ')
-            const repl = await browser.$(this.locators.replacePart)
-            await repl.waitForExist({ timeout: 2000 })
+        if (
+            (replace && klass.includes("collapsed")) ||
+            (!replace && !klass.includes("collapsed"))
+        ) {
+            await btn.addValue(" ");
+            const repl = await browser.$(this.locators.replacePart);
+            await repl.waitForExist({ timeout: 2000 });
             if (replace) {
-                await repl.waitForDisplayed({ timeout: 2000 })
+                await repl.waitForDisplayed({ timeout: 2000 });
             } else {
-                await repl.waitForDisplayed({ timeout: 2000, reverse: true })
+                await repl.waitForDisplayed({ timeout: 2000, reverse: true });
             }
         }
     }
@@ -594,169 +684,177 @@ export class FindWidget extends BasePage<typeof FindWidgetLocators> {
      * Set text in the search box
      * @param text text to fill in
      */
-    async setSearchText (text: string): Promise<void> {
-        await browser.keys([CMD_KEY, 'f'])
-        await browser.keys(text)
+    async setSearchText(text: string): Promise<void> {
+        await browser.keys([CMD_KEY, "f"]);
+        await browser.keys(text);
     }
 
     /**
      * Get text from Find input box
      * @returns value of find input as string
      */
-    async getSearchText (): Promise<string> {
-        const findPart = await this.findPart$
-        return this.getInputText(findPart)
+    async getSearchText(): Promise<string> {
+        const findPart = await this.findPart$;
+        return this.getInputText(findPart);
     }
 
     /**
      * Set text in the replace box. Will toggle replace mode on if called in find mode.
      * @param text text to fill in
      */
-    async setReplaceText (text: string): Promise<void> {
-        await this.toggleReplace(true)
-        const replacePart = await this.replacePart$
-        await this.setText(text, replacePart)
+    async setReplaceText(text: string): Promise<void> {
+        await this.toggleReplace(true);
+        const replacePart = await this.replacePart$;
+        await this.setText(text, replacePart);
     }
 
     /**
      * Get text from Replace input box
      * @returns value of replace input as string
      */
-    async getReplaceText (): Promise<string> {
-        const replacePart = await this.replacePart$
-        return this.getInputText(replacePart)
+    async getReplaceText(): Promise<string> {
+        const replacePart = await this.replacePart$;
+        return this.getInputText(replacePart);
     }
 
     /**
      * Click 'Next match'
      */
-    async nextMatch (): Promise<void> {
-        const name = (await browser.getVSCodeVersion()) < '1.59.0' ? 'Next match' : 'Next Match'
-        await this.clickButton(name, 'find')
+    async nextMatch(): Promise<void> {
+        const name =
+            (await browser.getVSCodeVersion()) < "1.59.0"
+                ? "Next match"
+                : "Next Match";
+        await this.clickButton(name, "find");
     }
 
     /**
      * Click 'Previous match'
      */
-    async previousMatch (): Promise<void> {
-        const name = (await browser.getVSCodeVersion()) < '1.59.0' ? 'Previous match' : 'Previous Match'
-        await this.clickButton(name, 'find')
+    async previousMatch(): Promise<void> {
+        const name =
+            (await browser.getVSCodeVersion()) < "1.59.0"
+                ? "Previous match"
+                : "Previous Match";
+        await this.clickButton(name, "find");
     }
 
     /**
      * Click 'Replace'. Only works in replace mode.
      */
-    async replace (): Promise<void> {
-        await this.clickButton('Replace', 'replace')
+    async replace(): Promise<void> {
+        await this.clickButton("Replace", "replace");
     }
 
     /**
      * Click 'Replace All'. Only works in replace mode.
      */
-    async replaceAll (): Promise<void> {
-        await this.clickButton('Replace All', 'replace')
+    async replaceAll(): Promise<void> {
+        await this.clickButton("Replace All", "replace");
     }
 
     /**
      * Close the widget.
      */
-    async close (): Promise<void> {
-        await this.clickButton('Close', 'find')
+    async close(): Promise<void> {
+        await this.clickButton("Close", "find");
     }
 
     /**
      * Get the number of results as an ordered pair of numbers
      * @returns pair in form of [current result index, total number of results]
      */
-    async getResultCount (): Promise<[number, number]> {
-        const count = await this.matchCount$
-        const text = await count.getText()
+    async getResultCount(): Promise<[number, number]> {
+        const count = await this.matchCount$;
+        const text = await count.getText();
 
-        if (text.includes('No results')) {
-            return [0, 0]
+        if (text.includes("No results")) {
+            return [0, 0];
         }
-        const numbers = text.split(' of ')
-        return [+numbers[0], +numbers[1]]
+        const numbers = text.split(" of ");
+        return [+numbers[0], +numbers[1]];
     }
 
     /**
      * Toggle the search to match case
      * @param toggle true to turn on, false to turn off
      */
-    async toggleMatchCase (toggle: boolean) {
-        await this.toggleControl('Match Case', 'find', toggle)
+    async toggleMatchCase(toggle: boolean) {
+        await this.toggleControl("Match Case", "find", toggle);
     }
 
     /**
      * Toggle the search to match whole words
      * @param toggle true to turn on, false to turn off
      */
-    async toggleMatchWholeWord (toggle: boolean) {
-        await this.toggleControl('Match Whole Word', 'find', toggle)
+    async toggleMatchWholeWord(toggle: boolean) {
+        await this.toggleControl("Match Whole Word", "find", toggle);
     }
 
     /**
      * Toggle the search to use regular expressions
      * @param toggle true to turn on, false to turn off
      */
-    async toggleUseRegularExpression (toggle: boolean) {
-        await this.toggleControl('Use Regular Expression', 'find', toggle)
+    async toggleUseRegularExpression(toggle: boolean) {
+        await this.toggleControl("Use Regular Expression", "find", toggle);
     }
 
     /**
      * Toggle the replace to preserve case
      * @param toggle true to turn on, false to turn off
      */
-    async togglePreserveCase (toggle: boolean) {
-        await this.toggleControl('Preserve Case', 'replace', toggle)
+    async togglePreserveCase(toggle: boolean) {
+        await this.toggleControl("Preserve Case", "replace", toggle);
     }
 
-    private async toggleControl (title: string, part: 'find' | 'replace', toggle: boolean) {
-        if (part !== 'find' && part !== 'replace') {
-            throw new Error('"part" parameter needs to be "find" or "replace"')
+    private async toggleControl(
+        title: string,
+        part: "find" | "replace",
+        toggle: boolean
+    ) {
+        if (part !== "find" && part !== "replace") {
+            throw new Error('"part" parameter needs to be "find" or "replace"');
         }
 
-        const element = part === 'find'
-            ? await this.findPart$
-            : await this.replacePart$
+        const element =
+            part === "find" ? await this.findPart$ : await this.replacePart$;
 
-        if (part === 'replace') {
-            await this.toggleReplace(true)
+        if (part === "replace") {
+            await this.toggleReplace(true);
         }
 
-        const control = await element.$(this.locators.checkbox(title))
-        const checked = await control.getAttribute('aria-checked')
-        if ((toggle && checked !== 'true') || (!toggle && checked === 'true')) {
-            await control.click()
+        const control = await element.$(this.locators.checkbox(title));
+        const checked = await control.getAttribute("aria-checked");
+        if ((toggle && checked !== "true") || (!toggle && checked === "true")) {
+            await control.click();
         }
     }
 
-    private async clickButton (title: string, part: 'find' | 'replace') {
-        if (part !== 'find' && part !== 'replace') {
-            throw new Error('"part" parameter needs to be "find" or "replace"')
+    private async clickButton(title: string, part: "find" | "replace") {
+        if (part !== "find" && part !== "replace") {
+            throw new Error('"part" parameter needs to be "find" or "replace"');
         }
 
-        const element = part === 'find'
-            ? await this.findPart$
-            : await this.replacePart$
+        const element =
+            part === "find" ? await this.findPart$ : await this.replacePart$;
 
-        if (part === 'replace') {
-            await this.toggleReplace(true)
+        if (part === "replace") {
+            await this.toggleReplace(true);
         }
 
-        const btn = await element.$(this.locators.button(title))
-        await btn.click()
+        const btn = await element.$(this.locators.button(title));
+        await btn.click();
         // eslint-disable-next-line wdio/no-pause
-        await browser.pause(100)
+        await browser.pause(100);
     }
 
-    private async setText (text: string, composite: WebdriverIO.Element) {
-        const input = await composite.$(this.locators.input)
-        await input.setValue(text)
+    private async setText(text: string, composite: ChainablePromiseElement) {
+        const input = await composite.$(this.locators.input);
+        await input.setValue(text);
     }
 
-    private async getInputText (composite: WebdriverIO.Element) {
-        const input = await composite.$(this.locators.content)
-        return input.getHTML(false)
+    private async getInputText(composite: ChainablePromiseElement) {
+        const input = await composite.$(this.locators.content);
+        return input.getHTML();
     }
 }

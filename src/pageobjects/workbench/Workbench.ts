@@ -125,7 +125,7 @@ export class Workbench extends BasePage<typeof WorkbenchLocators> {
         const notifications: Notification[] = []
         const containers = await this.notificationContainer$$
 
-        if (containers.length === 0) {
+        if (await containers.length === 0) {
             return []
         }
 
@@ -181,12 +181,12 @@ export class Workbench extends BasePage<typeof WorkbenchLocators> {
      * @returns Promise resolving to InputBox (vscode 1.44+) or QuickOpenBox (vscode up to 1.43) object
      */
     async openCommandPrompt (): Promise<QuickOpenBox | InputBox> {
-        const editorView = await new EditorView(this.locatorMap).wait()
-        const webview = await editorView.webView$$
-        if (webview.length > 0) {
-            const tab = await editorView.getActiveTab()
+        const editorView = await new EditorView(this.locatorMap).wait();
+        const webview = await editorView.webView$$;
+        if (await webview.length > 0) {
+            const tab = await editorView.getActiveTab();
             if (tab) {
-                await tab.elem.addValue('F1')
+                await tab.elem.addValue("F1");
                 const inputBox = new InputBox(this.locatorMap).wait()
                 return inputBox
             }

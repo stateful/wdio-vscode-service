@@ -39,7 +39,7 @@ export class ContentAssist extends Menu<typeof ContentAssistLocators> {
     async getItem (name: string): Promise<ContentAssistItem | undefined> {
         let lastItem = false
         let firstItem = await this.firstItem$$
-        while (firstItem.length < 1) {
+        while (await firstItem.length < 1) {
             await browser.action('key')
                 .down(Key.PageUp).up(Key.PageUp)
                 .perform()
@@ -119,7 +119,7 @@ export class ContentAssistItem extends MenuItem<typeof ContentAssistLocators> {
 
     constructor (
         locators: VSCodeLocatorMap,
-        item: string | ChainablePromiseElement<WebdriverIO.Element>,
+        item: string | ChainablePromiseElement,
         contentAssist: ContentAssist
     ) {
         super(locators, item)

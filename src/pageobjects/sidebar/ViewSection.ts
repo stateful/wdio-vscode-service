@@ -32,7 +32,7 @@ export interface ViewSection extends IPageDecorator<AllViewSectionLocators> { }
 export abstract class ViewSection extends BasePage<AllViewSectionLocators> {
     constructor (
         locators: VSCodeLocatorMap,
-        panel: ChainablePromiseElement<WebdriverIO.Element>,
+        panel: ChainablePromiseElement,
         public content: ViewContent
     ) {
         super(locators, panel)
@@ -201,7 +201,7 @@ export abstract class ViewSection extends BasePage<AllViewSectionLocators> {
             async openContextMenu () {
                 await this.elem.click()
                 const shadowRootHost = await section.elem.$$('.shadow-root-host')
-                if (shadowRootHost.length > 0) {
+                if (await shadowRootHost.length > 0) {
                     const shadowRoot = $(await browser.execute('return arguments[0].shadowRoot', shadowRootHost[0]))
                     return new ContextMenu(self.locatorMap, shadowRoot).wait()
                 }
@@ -231,7 +231,7 @@ export class ViewPanelAction extends BasePage<typeof ViewSectionLocators> {
 
     constructor (
         locators: VSCodeLocatorMap,
-        element: ChainablePromiseElement<WebdriverIO.Element>,
+        element: ChainablePromiseElement,
         viewPart: ViewSection
     ) {
         super(locators, element, viewPart.elem)

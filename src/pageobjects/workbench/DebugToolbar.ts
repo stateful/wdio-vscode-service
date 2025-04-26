@@ -81,7 +81,7 @@ export class DebugToolbar extends BasePage<typeof DebugToolbarLocators> {
         await this.getButton('stop').click()
     }
 
-    private getButton (name: string): ChainablePromiseElement<WebdriverIO.Element> {
+    private getButton (name: string): ChainablePromiseElement {
         return this.button$(name)
     }
 }

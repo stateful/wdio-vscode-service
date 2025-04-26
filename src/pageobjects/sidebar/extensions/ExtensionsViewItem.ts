@@ -1,16 +1,20 @@
-import type { ChainablePromiseElement } from 'webdriverio'
+import type { ChainablePromiseElement } from "webdriverio";
 
-import { ViewItem, ViewItemLocators } from '../ViewItem.js'
-import { ContextMenu } from '../../menu/ContextMenu.js'
-import { ExtensionsViewSection } from './ExtensionsViewSection.js'
+import { ViewItem, ViewItemLocators } from "../ViewItem.js";
+import { ContextMenu } from "../../menu/ContextMenu.js";
+import { ExtensionsViewSection } from "./ExtensionsViewSection.js";
 
-import { PageDecorator, IPageDecorator, VSCodeLocatorMap } from '../../utils.js'
+import {
+    PageDecorator,
+    IPageDecorator,
+    VSCodeLocatorMap,
+} from "../../utils.js";
 import {
     TreeItem as TreeItemLocators,
-    ExtensionsViewItem as ExtensionsViewItemLocators
-} from '../../../locators/1.73.0.js'
+    ExtensionsViewItem as ExtensionsViewItemLocators,
+} from "../../../locators/1.73.0.js";
 
-export interface ExtensionsViewItem extends IPageDecorator<ViewItemLocators> { }
+export interface ExtensionsViewItem extends IPageDecorator<ViewItemLocators> {}
 /**
  * Page object representing an extension in the extensions view
  *
@@ -21,75 +25,81 @@ export class ExtensionsViewItem extends ViewItem {
     /**
      * @private
      */
-    public locatorKey = ['TreeItem' as const, 'ExtensionsViewItem' as const]
+    public locatorKey = ["TreeItem" as const, "ExtensionsViewItem" as const];
 
-    constructor (
+    constructor(
         locators: VSCodeLocatorMap,
-        extensionElement: ChainablePromiseElement<WebdriverIO.Element>,
+        extensionElement: ChainablePromiseElement,
         public section: ExtensionsViewSection
     ) {
-        super(locators, extensionElement, section.elem)
+        super(locators, extensionElement, section.elem);
     }
 
     /**
      * Get title of the extension
      */
-    async getTitle (): Promise<string> {
-        return this.itemTitle$.getText()
+    async getTitle(): Promise<string> {
+        return this.itemTitle$.getText();
     }
 
     /**
      * Get version of the extension
      * @returns Promise resolving to version string
      */
-    async getVersion (): Promise<string> {
-        const version = await this.version$$
-        if (version.length > 0) {
-            return version[0].getText()
+    async getVersion(): Promise<string> {
+        const version = await this.version$$;
+        if ((await version.length) > 0) {
+            return version[0].getText();
         }
-        const label = await this.elem.getAttribute('aria-label')
-        const ver = label.split(',')[1].trim()
+        const label = await this.elem.getAttribute("aria-label");
+        const ver = label.split(",")[1].trim();
 
-        return ver
+        return ver;
     }
 
     /**
      * Get the author of the extension
      * @returns Promise resolving to displayed author
      */
-    async getAuthor (): Promise<string> {
-        const author = await this.author$
-        return author.getText()
+    async getAuthor(): Promise<string> {
+        const author = await this.author$;
+        return author.getText();
     }
 
     /**
      * Get the description of the extension
      * @returns Promise resolving to description
      */
-    async getDescription (): Promise<string> {
-        return this.description$.getText()
+    async getDescription(): Promise<string> {
+        return this.description$.getText();
     }
 
     /**
      * Find if the extension is installed
      * @returns Promise resolving to true/false
      */
-    async isInstalled (): Promise<boolean> {
-        if ((await this.install$.getAttribute('class')).indexOf('disabled') > -1) {
-            return true
+    async isInstalled(): Promise<boolean> {
+        if (
+            (await this.install$.getAttribute("class")).indexOf("disabled") > -1
+        ) {
+            return true;
         }
-        return false
+        return false;
     }
 
     /**
      * Open the management context menu if the extension is installed
      * @returns Promise resolving to ContextMenu object
      */
-    async manage (): Promise<ContextMenu> {
-        if ((await this.manage$.getAttribute('class')).indexOf('disabled') > -1) {
-            throw new Error(`Extension '${await this.getTitle()}' is not installed`)
+    async manage(): Promise<ContextMenu> {
+        if (
+            (await this.manage$.getAttribute("class")).indexOf("disabled") > -1
+        ) {
+            throw new Error(
+                `Extension '${await this.getTitle()}' is not installed`
+            );
         }
-        return this.openContextMenu()
+        return this.openContextMenu();
     }
 
     /**
@@ -100,15 +110,15 @@ export class ExtensionsViewItem extends ViewItem {
      * @param timeout timeout to wait for the installation in milliseconds, default unlimited, set to 0 to skip waiting
      * @returns Promise resolving when the installation finishes or is skipped
      */
-    async install (timeout = 300000): Promise<void> {
+    async install(timeout = 300000): Promise<void> {
         if (await this.isInstalled()) {
-            return
+            return;
         }
-        const button = await this.install$
-        await button.click()
+        const button = await this.install$;
+        await button.click();
 
         if (timeout > 0) {
-            await this.manage$.waitForDisplayed({ timeout })
+            await this.manage$.waitForDisplayed({ timeout });
         }
     }
 }

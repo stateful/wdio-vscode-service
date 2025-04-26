@@ -222,21 +222,21 @@ export class TerminalView extends ChannelView<typeof TerminalViewLocators> {
         await new Workbench(this.locatorMap)
             .executeCommand(this.locators.newCommand)
         const combo = await this.panel.elem.$$(this.locatorMap.BottomBarViews.channelCombo as string)
-        if (combo.length < 1) {
+        if (await combo.length < 1) {
             await browser.waitUntil(async () => {
                 const list = await this.tabList$$
-                return list.length > 0
+                return await list.length > 0
             }, { timeout: 5000 })
         }
     }
 
     async getCurrentChannel (): Promise<string> {
         const combo = await this.panel.elem.$$(this.locatorMap.BottomBarViews.channelCombo as string)
-        if (combo.length > 0) {
+        if (await combo.length > 0) {
             return super.getCurrentChannel()
         }
         const singleTerm = await this.panel.elem.$$(this.locators.singleTab)
-        if (singleTerm.length > 0) {
+        if (await singleTerm.length > 0) {
             return singleTerm[0].getText()
         }
         const list = await this.tabList$
@@ -248,11 +248,11 @@ export class TerminalView extends ChannelView<typeof TerminalViewLocators> {
 
     async selectChannel (name: string): Promise<void> {
         const combo = await this.panel.elem.$$(this.locatorMap.BottomBarViews.channelCombo as string)
-        if (combo.length > 0) {
+        if (await combo.length > 0) {
             return super.selectChannel(name)
         }
         const singleTerm = await this.panel.elem.$$(this.locators.singleTab)
-        if (singleTerm.length > 0) {
+        if (await singleTerm.length > 0) {
             return undefined
         }
 

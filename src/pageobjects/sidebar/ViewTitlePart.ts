@@ -74,7 +74,7 @@ export class TitleActionButton extends BasePage<typeof ViewTitlePartLocators> {
 
     constructor (
         locators: VSCodeLocatorMap,
-        elem: ChainablePromiseElement<WebdriverIO.Element>,
+        elem: ChainablePromiseElement,
         private title: string,
         viewTitle: ViewTitlePart
     ) {

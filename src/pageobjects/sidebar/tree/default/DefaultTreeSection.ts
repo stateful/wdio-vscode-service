@@ -42,7 +42,7 @@ export class DefaultTreeSection extends TreeSection {
         let item: TreeItem | undefined
         do {
             const temp = await container.$$((this.locatorMap.DefaultTreeItem.ctor as Function)(label) as string)
-            if (temp.length > 0) {
+            if (await temp.length > 0) {
                 const level = +await temp[0].getAttribute(this.locators.level)
                 if (maxLevel < 1 || level <= maxLevel) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -51,7 +51,7 @@ export class DefaultTreeSection extends TreeSection {
             }
             if (!item) {
                 const lastrow = await container.$$(this.locators.lastRow)
-                if (lastrow.length > 0) {
+                if (await lastrow.length > 0) {
                     break
                 }
                 await browser.action('key').down(Key.PageDown).up(Key.PageDown).perform()

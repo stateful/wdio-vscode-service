@@ -7,7 +7,6 @@ import logger from '@wdio/logger'
 import { setGlobalDispatcher, request, ProxyAgent } from 'undici'
 import { download } from '@vscode/test-electron'
 import { SevereServiceError } from 'webdriverio'
-import type { Capabilities } from '@wdio/types'
 import { HttpsProxyAgent } from 'hpagent'
 
 import startServer from './server/index.js'
@@ -66,10 +65,10 @@ export default class VSCodeServiceLauncher {
         this._cachePath = this._options.cachePath || DEFAULT_CACHE_PATH
     }
 
-    async onPrepare (_: never, capabilities: Capabilities.RemoteCapabilities) {
+    async onPrepare (_: never, capabilities: WebdriverIO.Capabilities) {
         const caps: VSCodeCapabilities[] = Array.isArray(capabilities)
-            ? capabilities.map((c) => ((c as Capabilities.W3CCapabilities).alwaysMatch || c) as VSCodeCapabilities)
-            : Object.values(capabilities).map((c) => c.capabilities as VSCodeCapabilities)
+            ? capabilities.map((c) => ((c as any).alwaysMatch || c) as VSCodeCapabilities)
+            : Object.values(capabilities).map((c) => ((c as any).capabilities) as VSCodeCapabilities)
 
         /**
          * Check if we already have the VS Code bundle for the given version
